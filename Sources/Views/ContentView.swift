@@ -7,7 +7,6 @@ struct ContentView: View {
 
     @State private var selectedDestination: Destination?
     @State private var showSearch = false
-    @State private var showSettings = false
     @State private var alertDistance: Double = 800
 
     var body: some View {
@@ -25,7 +24,7 @@ struct ContentView: View {
 
                         destinationSection(title: "Most Used", destinations: destinationStore.topUsed)
 
-                        destinationSection(title: "Recent", destinations: destinationStore.recent)
+                        destinationSection(title: "Recent", destinations: destinationStore.recent, isRecent: true)
 
                         Button {
                             showSearch = true
@@ -42,24 +41,18 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .sheet(isPresented: $showSearch) {
                     LocationSearchView { dest in
-                        selectedDestination = dest
-                    }
-                }
-                .sheet(isPresented: $showSettings) {
-                    if let dest = selectedDestination {
-                        AlertSettingsView(destination: dest, alertDistance: $alertDistance) { session in
-                            sessionManager.startSession(session)
-                            destinationStore.recordUse(dest)
-                            locationManager.startTracking(destination: dest, alertDistance: alertDistance)
-                            showSettings = false
-                            selectedDestination = nil
+                        showSearch = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            selectedDestination = dest
                         }
                     }
                 }
-                .onChange(of: selectedDestination) { _, newValue in
-                    if newValue != nil {
-                        showSearch = false
-                        showSettings = true
+                .sheet(item: $selectedDestination) { dest in
+                    AlertSettingsView(destination: dest, alertDistance: $alertDistance) { session in
+                        sessionManager.startSession(session)
+                        destinationStore.recordUse(dest)
+                        locationManager.startTracking(destination: dest, alertDistance: alertDistance)
+                        selectedDestination = nil
                     }
                 }
             }
@@ -107,7 +100,7 @@ struct ContentView: View {
         return []
     }
 
-    private func destinationSection(title: String, destinations: [Destination]) -> some View {
+    private func destinationSection(title: String, destinations: [Destination], isRecent: Bool = false) -> some View {
         Group {
             if !destinations.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
@@ -115,9 +108,11 @@ struct ContentView: View {
                         .font(.headline)
                         .foregroundStyle(.secondary)
                     ForEach(destinations) { dest in
-                        DestinationRow(destination: dest) {
+                        DestinationRow(
+                            destination: dest,
+                            onDelete: isRecent ? { destinationStore.deleteRecent(dest) } : nil
+                        ) {
                             selectedDestination = dest
-                            showSettings = true
                         }
                     }
                 }
@@ -127,12 +122,14 @@ struct ContentView: View {
 }
 
 struct DestinationRow: View {
+    @EnvironmentObject var destinationStore: DestinationStore
     let destination: Destination
+    var onDelete: (() -> Void)? = nil
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack {
+        HStack {
+            Button(action: action) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(destination.name)
                         .font(.body)
@@ -146,12 +143,39 @@ struct DestinationRow: View {
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .padding(12)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .buttonStyle(.plain)
+
+            Button {
+                destinationStore.toggleFavorite(destination)
+            } label: {
+                Image(systemName: destinationStore.isFavorite(destination) ? "star.fill" : "star")
+                    .font(.footnote)
+                    .foregroundStyle(destinationStore.isFavorite(destination) ? .yellow : .secondary)
+                    .padding(.leading, 6)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(destinationStore.isFavorite(destination) ? "Remove from favorites" : "Add to favorites")
         }
-        .buttonStyle(.plain)
+        .padding(12)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .contextMenu {
+            Button {
+                destinationStore.toggleFavorite(destination)
+            } label: {
+                Label(
+                    destinationStore.isFavorite(destination) ? "Unfavorite" : "Favorite",
+                    systemImage: destinationStore.isFavorite(destination) ? "star.slash" : "star"
+                )
+            }
+            if let onDelete = onDelete {
+                Button(role: .destructive, action: onDelete) {
+                    Label("Remove", systemImage: "trash")
+                }
+            }
+        }
     }
 }

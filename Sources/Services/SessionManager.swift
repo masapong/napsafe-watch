@@ -2,23 +2,47 @@ import Foundation
 import WatchKit
 import UserNotifications
 
-class SessionManager: ObservableObject {
+@MainActor
+class SessionManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     @Published var activeSession: NapSession?
     @Published var isAlerting = false
     @Published var totalNapMinutes: Int = 0
+
+    var onSessionEnded: (() -> Void)?
 
     private let totalKey = "totalNapMinutes"
     private var alarmTimer: Timer?
     private var alarmNotificationIDs: [String] = []
 
-    init() {
+    static let stopAlarmActionIdentifier = "STOP_ALARM_ACTION"
+    static let alertCategoryIdentifier = "ARRIVAL_ALERT"
+
+    override init() {
+        super.init()
         totalNapMinutes = UserDefaults.standard.integer(forKey: totalKey)
+        setupNotificationCategories()
+        UNUserNotificationCenter.current().delegate = self
+    }
+
+    private func setupNotificationCategories() {
+        let stopAction = UNNotificationAction(
+            identifier: Self.stopAlarmActionIdentifier,
+            title: "Stop Alarm",
+            options: [.foreground, .destructive]
+        )
+        let category = UNNotificationCategory(
+            identifier: Self.alertCategoryIdentifier,
+            actions: [stopAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+        UNUserNotificationCenter.current().setNotificationCategories([category])
     }
 
     func requestNotificationAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
-            if let error {
-                print("Notification authorization failed: \(error.localizedDescription)")
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("Notification authorization error: \(error.localizedDescription)")
             }
         }
     }
@@ -26,7 +50,6 @@ class SessionManager: ObservableObject {
     func startSession(_ session: NapSession) {
         activeSession = session
         isAlerting = false
-        scheduleLocalNotification(for: session)
     }
 
     func endSession() {
@@ -39,6 +62,7 @@ class SessionManager: ObservableObject {
         }
         stopAlerting()
         activeSession = nil
+        onSessionEnded?()
     }
 
     func resetTotalNapTime() {
@@ -66,7 +90,9 @@ class SessionManager: ObservableObject {
 
         alarmTimer?.invalidate()
         alarmTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
-            self?.fireHapticPattern()
+            Task { @MainActor in
+                self?.fireHapticPattern()
+            }
         }
     }
 
@@ -77,24 +103,13 @@ class SessionManager: ObservableObject {
         }
     }
 
-    private func scheduleLocalNotification(for session: NapSession) {
-        let content = UNMutableNotificationContent()
-        content.title = "Approaching \(session.destination.name)"
-        content.body = "Wake up! Your stop is near."
-        content.sound = .default
-        content.categoryIdentifier = "ARRIVAL_ALERT"
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "napsafe.arrival", content: content, trigger: trigger)
-        addNotificationRequest(request, description: "arrival alert")
-    }
-
     private func sendImmediateAlarmNotification() {
         let content = UNMutableNotificationContent()
+        let destinationName = activeSession?.destination.name ?? "your destination"
         content.title = "WAKE UP NOW"
-        content.body = "You are near your destination."
+        content.body = "Approaching \(destinationName)! Time to get off."
         content.sound = .default
-        content.categoryIdentifier = "ARRIVAL_ALERT"
+        content.categoryIdentifier = Self.alertCategoryIdentifier
         content.interruptionLevel = .timeSensitive
 
         let request = UNNotificationRequest(identifier: "napsafe.alarm.immediate", content: content, trigger: nil)
@@ -102,15 +117,17 @@ class SessionManager: ObservableObject {
     }
 
     private func schedulePersistentNotifications() {
+        let destinationName = activeSession?.destination.name ?? "your destination"
+
         for index in 1...20 {
             let id = "napsafe.alarm.\(index)"
             alarmNotificationIDs.append(id)
 
             let content = UNMutableNotificationContent()
             content.title = "WAKE UP NOW"
-            content.body = "You are near your destination."
+            content.body = "Approaching \(destinationName)! Time to get off."
             content.sound = .default
-            content.categoryIdentifier = "ARRIVAL_ALERT"
+            content.categoryIdentifier = Self.alertCategoryIdentifier
             content.interruptionLevel = .timeSensitive
 
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(index * 10), repeats: false)
@@ -135,5 +152,28 @@ class SessionManager: ObservableObject {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: idsToRemove)
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: idsToRemove)
         alarmNotificationIDs.removeAll()
+    }
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        Task { @MainActor in
+            if response.actionIdentifier == Self.stopAlarmActionIdentifier {
+                self.endSession()
+            }
+            completionHandler()
+        }
     }
 }

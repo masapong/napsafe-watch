@@ -12,6 +12,18 @@ struct NapsafeWatchApp: App {
                 .environmentObject(destinationStore)
                 .environmentObject(locationManager)
                 .environmentObject(sessionManager)
+                .onAppear {
+                    setupCoordination()
+                }
+        }
+    }
+
+    private func setupCoordination() {
+        locationManager.onProximityReached = { [weak sessionManager] in
+            sessionManager?.triggerAlert()
+        }
+        sessionManager.onSessionEnded = { [weak locationManager] in
+            locationManager?.stopTracking()
         }
     }
 }

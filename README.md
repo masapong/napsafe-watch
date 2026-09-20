@@ -23,9 +23,11 @@ Traditional time-based alarms fall short on public transit because of unpredicta
 - ⌚ **100% Standalone Watch App**: Built with `WKWatchOnly: true`. Operates independently on your Apple Watch—no companion iPhone app required.
 - 📍 **Proximity-Based Geofencing**: Alerts you based on physical distance to your station, not elapsed time.
 - 🎚️ **Customizable Alert Distances**: Choose when to be woken up:
+  - `500 m` (compact subway/bus stops)
   - `800 m` (approx. 1–2 minutes before arrival)
   - `1,000 m` (1 km)
-  - `1,500 m` (1.5 km for high-speed transit)
+  - `1,500 m` (1.5 km)
+  - `2,000 m` (2 km for high-speed transit)
 - 🚊 **Transport Modes**: Tailor your trip with dedicated modes:
   - 🚆 **Train** (`tram.fill`)
   - 🚇 **Subway** (`tram.tunnel.fill`)
@@ -33,15 +35,16 @@ Traditional time-based alarms fall short on public transit because of unpredicta
 - 🔔 **Multi-Stage Wakeup System**:
   - **Repeating Dual Haptics**: Alternates `.notification` and `.failure` haptic taps every 1.5 seconds to reliably wake heavy sleepers.
   - **Immediate Time-Sensitive Notification**: Bypasses standard Do Not Disturb / Focus modes with `interruptionLevel = .timeSensitive`.
+  - **Interactive Notification Action**: Dismiss the alarm with an actionable "Stop Alarm" button directly on the watch notification lock screen.
   - **Persistent Escalation Queue**: Pre-schedules 20 follow-up alert notifications spaced 10 seconds apart to prevent falling back asleep.
   - **High-Contrast Visual Warning**: Active display turns deep red with a prominent "WAKE UP" banner.
-- 🔍 **Station & Location Search**: Integrated with Apple MapKit (`MKLocalSearch`) for instant search across train stations, transit hubs, and custom addresses.
+- 🔍 **Station & Location Search**: Integrated with Apple MapKit (`MKLocalSearch`) with 300ms debounce for instant search across train stations, transit hubs, and custom addresses.
 - ⚡ **Smart Station Suggestions**:
   - **Nearby Stations**: Automatically calculates geodesic distances to major transit stations and displays the closest stops.
-  - **Favorites & Most Used**: Instant 1-tap start for frequent commutes.
-  - **Recent History**: Remembers your recent stops with automatic LRU eviction.
+  - **Favorites & Most Used**: Star any station directly from the dashboard, trip setup, or context menu for instant 1-tap starts.
+  - **Recent History**: Remembers your recent stops with automatic LRU eviction and swipe/context menu deletion.
 - 🗺️ **Interactive Map Integration**:
-  - **Pre-trip Map Preview**: Visualizes your destination pin alongside your current location with custom zoom controls.
+  - **Pre-trip Map Preview**: Visualizes your destination pin alongside your current location with custom zoom controls and safe boundary clamping.
   - **Live Dynamic Snapshot**: Background `MKMapSnapshotter` renders an ambient route overview on the active nap HUD.
 - ⏱️ **Commute & Nap Analytics**:
   - Live elapsed nap duration counter during active sessions.
@@ -63,7 +66,7 @@ napsafe-watch/
 │   ├── NapsafeWatch.entitlements   # Location push & Map entitlements
 │   └── Assets.xcassets             # App icons & color assets
 └── Sources/
-    ├── NapsafeWatchApp.swift       # App entry point & dependency injection
+    ├── NapsafeWatchApp.swift       # App entry point & service coordination
     ├── Models/
     │   ├── Destination.swift       # Destination entity & coordinate Codable support
     │   └── Session.swift           # NapSession model & TransportMode enum
@@ -71,11 +74,13 @@ napsafe-watch/
     │   ├── DestinationStore.swift  # Persistence (UserDefaults), Favorites & Station catalog
     │   ├── LocationManager.swift   # CoreLocation wrapper, background tracking & distance calculation
     │   └── SessionManager.swift    # Session lifecycle, repeating haptics & notification scheduling
+    ├── Utilities/
+    │   └── DistanceFormatter.swift # Unified distance formatting extension (Double/CLLocationDistance)
     └── Views/
         ├── ContentView.swift       # Main hub (Nearby, Favorites, Recents, Stats)
         ├── ActiveSessionView.swift # Live nap tracking HUD with map backdrop & wake-up alerts
-        ├── AlertSettingsView.swift # Distance/Transport picker & session launcher
-        ├── LocationSearchView.swift# MapKit natural language search sheet
+        ├── AlertSettingsView.swift # Distance/Transport picker, Favorite toggle & session launcher
+        ├── LocationSearchView.swift# MapKit natural language search sheet with debounce
         └── MapPreviewView.swift    # SwiftUI Map preview with custom zoom controls
 ```
 
@@ -83,10 +88,11 @@ napsafe-watch/
 
 | Component | Responsibility |
 |---|---|
-| [`LocationManager`](Sources/Services/LocationManager.swift) | Configures `CLLocationManager` with `allowsBackgroundLocationUpdates = true` and `kCLLocationAccuracyBest`. Calculates real-time distance using geodesic distance equations. |
-| [`SessionManager`](Sources/Services/SessionManager.swift) | Orchestrates the alarm sequence, manages repeating `WKInterfaceDevice` haptics, schedules `UNNotificationRequest` cycles, and tallies cumulative nap minutes. |
-| [`DestinationStore`](Sources/Services/DestinationStore.swift) | Persists user destinations in `UserDefaults`, ranks most-used stations, and calculates nearby presets from pre-configured transit coordinates. |
-| [`ActiveSessionView`](Sources/Views/ActiveSessionView.swift) | Renders the primary tracking screen, monitors distance thresholds every 3 seconds, triggers alarm state, and fetches map snapshots via `MKMapSnapshotter`. |
+| [`LocationManager`](Sources/Services/LocationManager.swift) | Configures `CLLocationManager` with `allowsBackgroundLocationUpdates = true` and `kCLLocationAccuracyBest`. Calculates real-time distance and fires proximity alerts even while the watch screen is asleep. |
+| [`SessionManager`](Sources/Services/SessionManager.swift) | Orchestrates the alarm sequence, manages repeating `WKInterfaceDevice` haptics, handles interactive `UNNotificationCategory` responses, and tallies cumulative nap minutes. |
+| [`DestinationStore`](Sources/Services/DestinationStore.swift) | Persists user destinations in `UserDefaults`, manages favorites and recents, and calculates nearby presets from static pre-configured transit coordinates. |
+| [`DistanceFormatter`](Sources/Utilities/DistanceFormatter.swift) | Single source of truth for formatting distance measurements (`m` and `km`) across the application. |
+| [`ActiveSessionView`](Sources/Views/ActiveSessionView.swift) | Renders the primary tracking screen, binds directly to `locationManager.distanceToDestination`, and displays ambient map snapshots via `MKMapSnapshotter`. |
 
 ---
 

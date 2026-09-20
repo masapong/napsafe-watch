@@ -32,10 +32,9 @@ struct NapSession: Identifiable, Codable {
         self.isActive = true
     }
 
+    static let presetAlertDistances: [Double] = [500, 800, 1000, 1500, 2000]
+
     var alertDistanceLabel: String {
-        if alertDistance >= 1000 {
-            return "\(Int(alertDistance / 1000)) km"
-        }
-        return "\(Int(alertDistance)) m"
+        alertDistance.formattedDistance
     }
 }

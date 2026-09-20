@@ -71,6 +71,13 @@ struct LocationSearchView: View {
 
         isSearching = true
         searchTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: 300_000_000)
+            } catch {
+                return
+            }
+            if Task.isCancelled { return }
+
             let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = query
             request.resultTypes = [.address, .pointOfInterest]

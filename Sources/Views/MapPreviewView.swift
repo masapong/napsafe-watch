@@ -66,10 +66,9 @@ struct MapPreviewView: View {
 
     private func zoom(by factor: Double) {
         let center = destination.coordinate
-        currentSpan = MKCoordinateSpan(
-            latitudeDelta: max(0.001, currentSpan.latitudeDelta * factor),
-            longitudeDelta: max(0.001, currentSpan.longitudeDelta * factor)
-        )
+        let newLatDelta = min(max(0.002, currentSpan.latitudeDelta * factor), 120.0)
+        let newLonDelta = min(max(0.002, currentSpan.longitudeDelta * factor), 120.0)
+        currentSpan = MKCoordinateSpan(latitudeDelta: newLatDelta, longitudeDelta: newLonDelta)
         position = .region(MKCoordinateRegion(center: center, span: currentSpan))
     }
 
@@ -85,8 +84,8 @@ struct MapPreviewView: View {
             longitude: (minLon + maxLon) / 2
         )
         let span = MKCoordinateSpan(
-            latitudeDelta: max((maxLat - minLat) * 1.5, 0.001),
-            longitudeDelta: max((maxLon - minLon) * 1.5, 0.001)
+            latitudeDelta: min(max((maxLat - minLat) * 1.5, 0.01), 120.0),
+            longitudeDelta: min(max((maxLon - minLon) * 1.5, 0.01), 120.0)
         )
         currentSpan = span
         position = .region(MKCoordinateRegion(center: center, span: span))

@@ -47,30 +47,53 @@ class DestinationStore: ObservableObject {
         save()
     }
 
+    static let defaultStations: [Destination] = [
+        Destination(name: "Tokyo Station", coordinate: CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671), address: "Marunouchi, Chiyoda-ku"),
+        Destination(name: "Shinjuku Station", coordinate: CLLocationCoordinate2D(latitude: 35.6896, longitude: 139.7006), address: "Shinjuku-ku"),
+        Destination(name: "Shibuya Station", coordinate: CLLocationCoordinate2D(latitude: 35.6580, longitude: 139.7016), address: "Shibuya-ku"),
+        Destination(name: "Ikebukuro Station", coordinate: CLLocationCoordinate2D(latitude: 35.7303, longitude: 139.7110), address: "Toshima-ku"),
+        Destination(name: "Nishi-Ogikubo Station", coordinate: CLLocationCoordinate2D(latitude: 35.7042, longitude: 139.6004), address: "Suginami-ku"),
+        Destination(name: "Kichijoji Station", coordinate: CLLocationCoordinate2D(latitude: 35.7034, longitude: 139.5799), address: "Musashino-shi"),
+        Destination(name: "Mitaka Station", coordinate: CLLocationCoordinate2D(latitude: 35.7033, longitude: 139.5608), address: "Mitaka-shi"),
+        Destination(name: "Koenji Station", coordinate: CLLocationCoordinate2D(latitude: 35.7058, longitude: 139.6494), address: "Suginami-ku"),
+        Destination(name: "Nakano Station", coordinate: CLLocationCoordinate2D(latitude: 35.7075, longitude: 139.6639), address: "Nakano-ku"),
+        Destination(name: "Tachikawa Station", coordinate: CLLocationCoordinate2D(latitude: 35.6981, longitude: 139.4132), address: "Tachikawa-shi"),
+        Destination(name: "Yokohama Station", coordinate: CLLocationCoordinate2D(latitude: 35.4658, longitude: 139.6224), address: "Nishi-ku, Yokohama"),
+        Destination(name: "Kawasaki Station", coordinate: CLLocationCoordinate2D(latitude: 35.5311, longitude: 139.6970), address: "Kawasaki-ku"),
+        Destination(name: "Omiya Station", coordinate: CLLocationCoordinate2D(latitude: 35.9061, longitude: 139.6233), address: "Omiya-ku, Saitama"),
+        Destination(name: "Ueno Station", coordinate: CLLocationCoordinate2D(latitude: 35.7138, longitude: 139.7773), address: "Taito-ku"),
+        Destination(name: "Akihabara Station", coordinate: CLLocationCoordinate2D(latitude: 35.6984, longitude: 139.7731), address: "Chiyoda-ku"),
+        Destination(name: "Osaka Station", coordinate: CLLocationCoordinate2D(latitude: 34.7024, longitude: 135.4959), address: "Umeda, Kita-ku"),
+        Destination(name: "Kyoto Station", coordinate: CLLocationCoordinate2D(latitude: 34.9858, longitude: 135.7588), address: "Shimogyo-ku, Kyoto"),
+        Destination(name: "Nagoya Station", coordinate: CLLocationCoordinate2D(latitude: 35.1709, longitude: 136.8815), address: "Nakamura-ku, Nagoya"),
+        Destination(name: "Hiroshima Station", coordinate: CLLocationCoordinate2D(latitude: 34.3979, longitude: 132.4756), address: "Minami-ku, Hiroshima"),
+        Destination(name: "Fukuoka Station", coordinate: CLLocationCoordinate2D(latitude: 33.5899, longitude: 130.4206), address: "Hakata-ku, Fukuoka"),
+    ]
+
+    func isFavorite(_ destination: Destination) -> Bool {
+        favorites.contains(where: { $0.id == destination.id })
+    }
+
+    func toggleFavorite(_ destination: Destination) {
+        if isFavorite(destination) {
+            removeFavorite(destination)
+        } else {
+            addFavorite(destination)
+        }
+    }
+
+    func deleteRecent(_ destination: Destination) {
+        recent.removeAll { $0.id == destination.id }
+        save()
+    }
+
+    func clearRecent() {
+        recent.removeAll()
+        save()
+    }
+
     func nearbyDestinations(current: CLLocationCoordinate2D, limit: Int = 5) -> [Destination] {
-        let realStations: [Destination] = [
-            Destination(name: "Tokyo Station", coordinate: CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671), address: "Marunouchi, Chiyoda-ku"),
-            Destination(name: "Shinjuku Station", coordinate: CLLocationCoordinate2D(latitude: 35.6896, longitude: 139.7006), address: "Shinjuku-ku"),
-            Destination(name: "Shibuya Station", coordinate: CLLocationCoordinate2D(latitude: 35.6580, longitude: 139.7016), address: "Shibuya-ku"),
-            Destination(name: "Ikebukuro Station", coordinate: CLLocationCoordinate2D(latitude: 35.7303, longitude: 139.7110), address: "Toshima-ku"),
-            Destination(name: "Nishi-Ogikubo Station", coordinate: CLLocationCoordinate2D(latitude: 35.7042, longitude: 139.6004), address: "Suginami-ku"),
-            Destination(name: "Kichijoji Station", coordinate: CLLocationCoordinate2D(latitude: 35.7034, longitude: 139.5799), address: "Musashino-shi"),
-            Destination(name: "Mitaka Station", coordinate: CLLocationCoordinate2D(latitude: 35.7033, longitude: 139.5608), address: "Mitaka-shi"),
-            Destination(name: "Koenji Station", coordinate: CLLocationCoordinate2D(latitude: 35.7058, longitude: 139.6494), address: "Suginami-ku"),
-            Destination(name: "Nakano Station", coordinate: CLLocationCoordinate2D(latitude: 35.7075, longitude: 139.6639), address: "Nakano-ku"),
-            Destination(name: "Tachikawa Station", coordinate: CLLocationCoordinate2D(latitude: 35.6981, longitude: 139.4132), address: "Tachikawa-shi"),
-            Destination(name: "Yokohama Station", coordinate: CLLocationCoordinate2D(latitude: 35.4658, longitude: 139.6224), address: "Nishi-ku, Yokohama"),
-            Destination(name: "Kawasaki Station", coordinate: CLLocationCoordinate2D(latitude: 35.5311, longitude: 139.6970), address: "Kawasaki-ku"),
-            Destination(name: "Omiya Station", coordinate: CLLocationCoordinate2D(latitude: 35.9061, longitude: 139.6233), address: "Omiya-ku, Saitama"),
-            Destination(name: "Ueno Station", coordinate: CLLocationCoordinate2D(latitude: 35.7138, longitude: 139.7773), address: "Taito-ku"),
-            Destination(name: "Akihabara Station", coordinate: CLLocationCoordinate2D(latitude: 35.6984, longitude: 139.7731), address: "Chiyoda-ku"),
-            Destination(name: "Osaka Station", coordinate: CLLocationCoordinate2D(latitude: 34.7024, longitude: 135.4959), address: "Umeda, Kita-ku"),
-            Destination(name: "Kyoto Station", coordinate: CLLocationCoordinate2D(latitude: 34.9858, longitude: 135.7588), address: "Shimogyo-ku, Kyoto"),
-            Destination(name: "Nagoya Station", coordinate: CLLocationCoordinate2D(latitude: 35.1709, longitude: 136.8815), address: "Nakamura-ku, Nagoya"),
-            Destination(name: "Hiroshima Station", coordinate: CLLocationCoordinate2D(latitude: 34.3979, longitude: 132.4756), address: "Minami-ku, Hiroshima"),
-            Destination(name: "Fukuoka Station", coordinate: CLLocationCoordinate2D(latitude: 33.5899, longitude: 130.4206), address: "Hakata-ku, Fukuoka"),
-        ]
-        return realStations.sorted {
+        Self.defaultStations.sorted {
             let d1 = CLLocation(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
                 .distance(from: CLLocation(latitude: current.latitude, longitude: current.longitude))
             let d2 = CLLocation(latitude: $1.coordinate.latitude, longitude: $1.coordinate.longitude)

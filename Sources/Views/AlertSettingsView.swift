@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AlertSettingsView: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var destinationStore: DestinationStore
     let destination: Destination
     @Binding var alertDistance: Double
     var onStart: (NapSession) -> Void
@@ -9,7 +10,7 @@ struct AlertSettingsView: View {
     @State private var transportMode: TransportMode = .train
     @State private var showMap = false
 
-    let distances: [Double] = [800, 1000, 1500]
+    let distances: [Double] = NapSession.presetAlertDistances
 
     var body: some View {
         NavigationStack {
@@ -22,7 +23,7 @@ struct AlertSettingsView: View {
                             .font(.headline)
                         Picker("", selection: $alertDistance) {
                             ForEach(distances, id: \.self) { d in
-                                Text(formatDistance(d)).tag(d)
+                                Text(d.formattedDistance).tag(d)
                             }
                         }
                         .pickerStyle(.wheel)
@@ -88,28 +89,30 @@ struct AlertSettingsView: View {
     }
 
     private var destinationCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(destination.name)
-                .font(.title3.bold())
-            if let addr = destination.address {
-                Text(addr)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(destination.name)
+                    .font(.title3.bold())
+                if let addr = destination.address {
+                    Text(addr)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
+            Spacer()
+            Button {
+                destinationStore.toggleFavorite(destination)
+            } label: {
+                Image(systemName: destinationStore.isFavorite(destination) ? "star.fill" : "star")
+                    .font(.title3)
+                    .foregroundStyle(.yellow)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(destinationStore.isFavorite(destination) ? "Remove from favorites" : "Add to favorites")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func formatDistance(_ meters: Double) -> String {
-        if meters >= 1000 {
-            let km = meters / 1000
-            return km.truncatingRemainder(dividingBy: 1) == 0
-                ? "\(Int(km)) km"
-                : "\(km) km"
-        }
-        return "\(Int(meters)) m"
     }
 }

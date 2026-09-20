@@ -8,11 +8,14 @@ struct ActiveSessionView: View {
     @EnvironmentObject var sessionManager: SessionManager
     let session: NapSession
 
-    @State private var distance: Double?
-    @State private var timer: Timer?
+    @State private var napTimer: Timer?
     @State private var mapImage: UIImage?
     @State private var mapUpdateTimer: Timer?
     @State private var napMinutes: Int = 0
+
+    private var currentDistance: Double? {
+        locationManager.distanceToDestination
+    }
 
     var body: some View {
         ZStack {
@@ -61,9 +64,9 @@ struct ActiveSessionView: View {
                     }
                     .padding(.top, 6)
 
-                    if let d = distance {
+                    if let d = currentDistance {
                         VStack(spacing: 2) {
-                            Text(formatDistance(d))
+                            Text(d.formattedDistance)
                                 .font(.system(size: 38, weight: .bold, design: .rounded))
                                 .foregroundStyle(d <= session.alertDistance ? .red : .primary)
                             Text("to destination")
@@ -119,41 +122,30 @@ struct ActiveSessionView: View {
             }
         }
         .onAppear {
-            startDistanceUpdates()
+            startNapTimer()
             startMapUpdates()
         }
         .onDisappear {
-            timer?.invalidate()
+            napTimer?.invalidate()
             mapUpdateTimer?.invalidate()
         }
     }
 
-    private func startDistanceUpdates() {
-        timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
-            if let d = locationManager.distance(to: session.destination) {
-                distance = d
-                if d <= session.alertDistance && !sessionManager.isAlerting {
-                    sessionManager.triggerAlert()
-                }
-            }
-            // Update nap duration
+    private func startNapTimer() {
+        napMinutes = Int(Date().timeIntervalSince(session.startTime) / 60)
+        napTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
             let elapsedMin = Int(Date().timeIntervalSince(session.startTime) / 60)
-            if elapsedMin != napMinutes { napMinutes = elapsedMin }
+            if elapsedMin != napMinutes {
+                napMinutes = elapsedMin
+            }
         }
-        timer?.fire()
     }
 
     private func stopSession() {
-        timer?.invalidate()
+        napTimer?.invalidate()
+        mapUpdateTimer?.invalidate()
         locationManager.stopTracking()
         sessionManager.endSession()
-    }
-
-    private func formatDistance(_ meters: Double) -> String {
-        if meters >= 1000 {
-            return String(format: "%.1f km", meters / 1000)
-        }
-        return "\(Int(meters)) m"
     }
 
     private func startMapUpdates() {
@@ -167,7 +159,6 @@ struct ActiveSessionView: View {
         let dest = session.destination.coordinate
         let current = locationManager.currentLocation?.coordinate ?? dest
 
-        // Calculate region encompassing both points with padding
         let minLat = min(current.latitude, dest.latitude) - 0.01
         let maxLat = max(current.latitude, dest.latitude) + 0.01
         let minLon = min(current.longitude, dest.longitude) - 0.01
@@ -178,8 +169,8 @@ struct ActiveSessionView: View {
             longitude: (minLon + maxLon) / 2
         )
         let span = MKCoordinateSpan(
-            latitudeDelta: maxLat - minLat,
-            longitudeDelta: maxLon - minLon
+            latitudeDelta: min(max(maxLat - minLat, 0.01), 120.0),
+            longitudeDelta: min(max(maxLon - minLon, 0.01), 120.0)
         )
         let region = MKCoordinateRegion(center: center, span: span)
 
@@ -189,10 +180,10 @@ struct ActiveSessionView: View {
         options.scale = 2.0
 
         let snapshotter = MKMapSnapshotter(options: options)
-        snapshotter.start { snapshot, error in
+        snapshotter.start { [weak self] snapshot, error in
             guard let snapshot = snapshot, error == nil else { return }
             DispatchQueue.main.async {
-                self.mapImage = snapshot.image
+                self?.mapImage = snapshot.image
             }
         }
     }
