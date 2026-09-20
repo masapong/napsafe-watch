@@ -8,17 +8,19 @@ struct ActiveSessionView: View {
     @EnvironmentObject var sessionManager: SessionManager
     let session: NapSession
 
-    @State private var distance: Double?
-    @State private var timer: Timer?
     @State private var mapImage: UIImage?
     @State private var mapUpdateTimer: Timer?
+    @State private var napTimer: Timer?
     @State private var napMinutes: Int = 0
+
+    private var distance: Double? {
+        locationManager.distanceToDestination ?? locationManager.distance(to: session.destination)
+    }
 
     var body: some View {
         ZStack {
-            // Map background (subtle)
-            if let img = mapImage {
-                Image(uiImage: img)
+            if let mapImage {
+                Image(uiImage: mapImage)
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
@@ -26,7 +28,6 @@ struct ActiveSessionView: View {
                 Color.black.ignoresSafeArea()
             }
 
-            // Dark overlay to make UI readable
             Color.black
                 .ignoresSafeArea()
                 .opacity(0.65)
@@ -63,7 +64,7 @@ struct ActiveSessionView: View {
 
                     if let d = distance {
                         VStack(spacing: 2) {
-                            Text(formatDistance(d))
+                            Text(DistanceFormat.live(meters: d))
                                 .font(.system(size: 38, weight: .bold, design: .rounded))
                                 .foregroundStyle(d <= session.alertDistance ? .red : .primary)
                             Text("to destination")
@@ -119,69 +120,66 @@ struct ActiveSessionView: View {
             }
         }
         .onAppear {
-            startDistanceUpdates()
+            locationManager.onProximityReached = { [weak sessionManager] in
+                sessionManager?.triggerAlert()
+            }
+            refreshNapMinutes()
+            startNapTimer()
             startMapUpdates()
         }
+        .onChange(of: locationManager.distanceToDestination) { _, newDistance in
+            guard let d = newDistance,
+                  d <= session.alertDistance,
+                  !sessionManager.isAlerting else { return }
+            sessionManager.triggerAlert()
+        }
         .onDisappear {
-            timer?.invalidate()
-            mapUpdateTimer?.invalidate()
+            invalidateTimers()
         }
     }
 
-    private func startDistanceUpdates() {
-        timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
-            if let d = locationManager.distance(to: session.destination) {
-                distance = d
-                if d <= session.alertDistance && !sessionManager.isAlerting {
-                    sessionManager.triggerAlert()
-                }
-            }
-            // Update nap duration
-            let elapsedMin = Int(Date().timeIntervalSince(session.startTime) / 60)
-            if elapsedMin != napMinutes { napMinutes = elapsedMin }
+    private func startNapTimer() {
+        let timer = Timer(timeInterval: 15, repeats: true) { _ in
+            refreshNapMinutes()
         }
-        timer?.fire()
+        RunLoop.main.add(timer, forMode: .common)
+        napTimer = timer
+    }
+
+    private func refreshNapMinutes() {
+        let elapsedMin = Int(Date().timeIntervalSince(session.startTime) / 60)
+        if elapsedMin != napMinutes {
+            napMinutes = elapsedMin
+        }
     }
 
     private func stopSession() {
-        timer?.invalidate()
+        invalidateTimers()
+        locationManager.onProximityReached = nil
         locationManager.stopTracking()
         sessionManager.endSession()
     }
 
-    private func formatDistance(_ meters: Double) -> String {
-        if meters >= 1000 {
-            return String(format: "%.1f km", meters / 1000)
-        }
-        return "\(Int(meters)) m"
+    private func invalidateTimers() {
+        napTimer?.invalidate()
+        napTimer = nil
+        mapUpdateTimer?.invalidate()
+        mapUpdateTimer = nil
     }
 
     private func startMapUpdates() {
         updateMapImage()
-        mapUpdateTimer = Timer.scheduledTimer(withTimeInterval: 120, repeats: true) { _ in
+        let timer = Timer(timeInterval: 120, repeats: true) { _ in
             updateMapImage()
         }
+        RunLoop.main.add(timer, forMode: .common)
+        mapUpdateTimer = timer
     }
 
     private func updateMapImage() {
         let dest = session.destination.coordinate
         let current = locationManager.currentLocation?.coordinate ?? dest
-
-        // Calculate region encompassing both points with padding
-        let minLat = min(current.latitude, dest.latitude) - 0.01
-        let maxLat = max(current.latitude, dest.latitude) + 0.01
-        let minLon = min(current.longitude, dest.longitude) - 0.01
-        let maxLon = max(current.longitude, dest.longitude) + 0.01
-
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
-        )
-        let span = MKCoordinateSpan(
-            latitudeDelta: maxLat - minLat,
-            longitudeDelta: maxLon - minLon
-        )
-        let region = MKCoordinateRegion(center: center, span: span)
+        let region = MapRegion.encompassing(current, dest, paddingDegrees: 0.01)
 
         let options = MKMapSnapshotter.Options()
         options.region = region
@@ -190,10 +188,34 @@ struct ActiveSessionView: View {
 
         let snapshotter = MKMapSnapshotter(options: options)
         snapshotter.start { snapshot, error in
-            guard let snapshot = snapshot, error == nil else { return }
+            guard let snapshot, error == nil else { return }
             DispatchQueue.main.async {
                 self.mapImage = snapshot.image
             }
         }
+    }
+}
+
+enum MapRegion {
+    static func encompassing(
+        _ a: CLLocationCoordinate2D,
+        _ b: CLLocationCoordinate2D,
+        paddingDegrees: CLLocationDegrees,
+        minimumDelta: CLLocationDegrees = 0.001
+    ) -> MKCoordinateRegion {
+        let minLat = min(a.latitude, b.latitude) - paddingDegrees
+        let maxLat = max(a.latitude, b.latitude) + paddingDegrees
+        let minLon = min(a.longitude, b.longitude) - paddingDegrees
+        let maxLon = max(a.longitude, b.longitude) + paddingDegrees
+
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+        let span = MKCoordinateSpan(
+            latitudeDelta: max(maxLat - minLat, minimumDelta),
+            longitudeDelta: max(maxLon - minLon, minimumDelta)
+        )
+        return MKCoordinateRegion(center: center, span: span)
     }
 }

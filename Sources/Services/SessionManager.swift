@@ -11,6 +11,11 @@ class SessionManager: ObservableObject {
     private var alarmTimer: Timer?
     private var alarmNotificationIDs: [String] = []
 
+    private static let arrivalNotificationID = "napsafe.arrival"
+    private static let immediateAlarmID = "napsafe.alarm.immediate"
+    private static let persistentAlarmCount = 20
+    private static let persistentAlarmInterval: TimeInterval = 10
+
     init() {
         totalNapMinutes = UserDefaults.standard.integer(forKey: totalKey)
     }
@@ -24,9 +29,10 @@ class SessionManager: ObservableObject {
     }
 
     func startSession(_ session: NapSession) {
+        stopAlerting()
         activeSession = session
         isAlerting = false
-        scheduleLocalNotification(for: session)
+        // Do not schedule an arrival notification here — proximity is handled by LocationManager.
     }
 
     func endSession() {
@@ -65,9 +71,11 @@ class SessionManager: ObservableObject {
         schedulePersistentNotifications()
 
         alarmTimer?.invalidate()
-        alarmTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.5, repeats: true) { [weak self] _ in
             self?.fireHapticPattern()
         }
+        RunLoop.main.add(timer, forMode: .common)
+        alarmTimer = timer
     }
 
     private func fireHapticPattern() {
@@ -77,43 +85,42 @@ class SessionManager: ObservableObject {
         }
     }
 
-    private func scheduleLocalNotification(for session: NapSession) {
+    private func makeAlarmContent(title: String, body: String, timeSensitive: Bool) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = "Approaching \(session.destination.name)"
-        content.body = "Wake up! Your stop is near."
+        content.title = title
+        content.body = body
         content.sound = .default
         content.categoryIdentifier = "ARRIVAL_ALERT"
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "napsafe.arrival", content: content, trigger: trigger)
-        addNotificationRequest(request, description: "arrival alert")
+        if timeSensitive {
+            content.interruptionLevel = .timeSensitive
+        }
+        return content
     }
 
     private func sendImmediateAlarmNotification() {
-        let content = UNMutableNotificationContent()
-        content.title = "WAKE UP NOW"
-        content.body = "You are near your destination."
-        content.sound = .default
-        content.categoryIdentifier = "ARRIVAL_ALERT"
-        content.interruptionLevel = .timeSensitive
-
-        let request = UNNotificationRequest(identifier: "napsafe.alarm.immediate", content: content, trigger: nil)
+        let content = makeAlarmContent(
+            title: "WAKE UP NOW",
+            body: "You are near your destination.",
+            timeSensitive: true
+        )
+        let request = UNNotificationRequest(identifier: Self.immediateAlarmID, content: content, trigger: nil)
         addNotificationRequest(request, description: "immediate alarm")
     }
 
     private func schedulePersistentNotifications() {
-        for index in 1...20 {
+        for index in 1...Self.persistentAlarmCount {
             let id = "napsafe.alarm.\(index)"
             alarmNotificationIDs.append(id)
 
-            let content = UNMutableNotificationContent()
-            content.title = "WAKE UP NOW"
-            content.body = "You are near your destination."
-            content.sound = .default
-            content.categoryIdentifier = "ARRIVAL_ALERT"
-            content.interruptionLevel = .timeSensitive
-
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(index * 10), repeats: false)
+            let content = makeAlarmContent(
+                title: "WAKE UP NOW",
+                body: "You are near your destination.",
+                timeSensitive: true
+            )
+            let trigger = UNTimeIntervalNotificationTrigger(
+                timeInterval: Double(index) * Self.persistentAlarmInterval,
+                repeats: false
+            )
             let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
             addNotificationRequest(request, description: "alarm reminder \(index)")
         }
@@ -129,8 +136,8 @@ class SessionManager: ObservableObject {
 
     private func removeAlarmNotifications() {
         var idsToRemove = alarmNotificationIDs
-        idsToRemove.append("napsafe.alarm.immediate")
-        idsToRemove.append("napsafe.arrival")
+        idsToRemove.append(Self.immediateAlarmID)
+        idsToRemove.append(Self.arrivalNotificationID)
 
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: idsToRemove)
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: idsToRemove)

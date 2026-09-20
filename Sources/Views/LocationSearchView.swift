@@ -11,6 +11,8 @@ struct LocationSearchView: View {
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
 
+    private let debounceNanoseconds: UInt64 = 300_000_000
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -58,12 +60,14 @@ struct LocationSearchView: View {
             }
         }
         .onAppear { results = [] }
+        .onDisappear { searchTask?.cancel() }
     }
 
     private func search(query: String) {
         searchTask?.cancel()
 
-        if query.isEmpty {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
             results = []
             isSearching = false
             return
@@ -71,13 +75,17 @@ struct LocationSearchView: View {
 
         isSearching = true
         searchTask = Task {
+            try? await Task.sleep(nanoseconds: debounceNanoseconds)
+            guard !Task.isCancelled else { return }
+
             let request = MKLocalSearch.Request()
-            request.naturalLanguageQuery = query
+            request.naturalLanguageQuery = trimmed
             request.resultTypes = [.address, .pointOfInterest]
 
             do {
                 let search = MKLocalSearch(request: request)
                 let response = try await search.start()
+                guard !Task.isCancelled else { return }
 
                 let destinations = response.mapItems.map { item in
                     Destination(
@@ -87,18 +95,16 @@ struct LocationSearchView: View {
                     )
                 }
 
-                if !Task.isCancelled {
-                    await MainActor.run {
-                        results = destinations
-                        isSearching = false
-                    }
+                await MainActor.run {
+                    guard !Task.isCancelled else { return }
+                    results = destinations
+                    isSearching = false
                 }
             } catch {
-                if !Task.isCancelled {
-                    await MainActor.run {
-                        results = []
-                        isSearching = false
-                    }
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    results = []
+                    isSearching = false
                 }
             }
         }

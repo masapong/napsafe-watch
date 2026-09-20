@@ -15,6 +15,28 @@ enum TransportMode: String, Codable, CaseIterable {
     }
 }
 
+enum DistanceFormat {
+    /// Short label for pickers / HUD (e.g. "800 m", "1 km", "1.5 km").
+    static func label(meters: Double) -> String {
+        if meters >= 1000 {
+            let km = meters / 1000
+            if km.truncatingRemainder(dividingBy: 1) == 0 {
+                return "\(Int(km)) km"
+            }
+            return String(format: "%g km", km)
+        }
+        return "\(Int(meters)) m"
+    }
+
+    /// Live distance readout with one decimal for km (e.g. "1.2 km").
+    static func live(meters: Double) -> String {
+        if meters >= 1000 {
+            return String(format: "%.1f km", meters / 1000)
+        }
+        return "\(Int(meters)) m"
+    }
+}
+
 struct NapSession: Identifiable, Codable {
     let id: UUID
     var destination: Destination
@@ -23,7 +45,13 @@ struct NapSession: Identifiable, Codable {
     var startTime: Date
     var isActive: Bool
 
-    init(id: UUID = UUID(), destination: Destination, alertDistance: Double = 800, transportMode: TransportMode = .train, startTime: Date = Date()) {
+    init(
+        id: UUID = UUID(),
+        destination: Destination,
+        alertDistance: Double = 800,
+        transportMode: TransportMode = .train,
+        startTime: Date = Date()
+    ) {
         self.id = id
         self.destination = destination
         self.alertDistance = alertDistance
@@ -33,9 +61,6 @@ struct NapSession: Identifiable, Codable {
     }
 
     var alertDistanceLabel: String {
-        if alertDistance >= 1000 {
-            return "\(Int(alertDistance / 1000)) km"
-        }
-        return "\(Int(alertDistance)) m"
+        DistanceFormat.label(meters: alertDistance)
     }
 }

@@ -45,6 +45,11 @@ struct MapPreviewView: View {
             }
             .navigationTitle(destination.name)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
             .onAppear {
                 centerOnBoth()
             }
@@ -75,20 +80,21 @@ struct MapPreviewView: View {
 
     private func centerOnBoth() {
         guard let current = locationManager.currentLocation?.coordinate else { return }
-        let minLat = min(current.latitude, destination.coordinate.latitude)
-        let maxLat = max(current.latitude, destination.coordinate.latitude)
-        let minLon = min(current.longitude, destination.coordinate.longitude)
-        let maxLon = max(current.longitude, destination.coordinate.longitude)
-
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
+        let region = MapRegion.encompassing(
+            current,
+            destination.coordinate,
+            paddingDegrees: 0,
+            minimumDelta: 0.001
         )
-        let span = MKCoordinateSpan(
-            latitudeDelta: max((maxLat - minLat) * 1.5, 0.001),
-            longitudeDelta: max((maxLon - minLon) * 1.5, 0.001)
+        // Match previous 1.5x padding behavior for preview framing.
+        let padded = MKCoordinateRegion(
+            center: region.center,
+            span: MKCoordinateSpan(
+                latitudeDelta: max(region.span.latitudeDelta * 1.5, 0.001),
+                longitudeDelta: max(region.span.longitudeDelta * 1.5, 0.001)
+            )
         )
-        currentSpan = span
-        position = .region(MKCoordinateRegion(center: center, span: span))
+        currentSpan = padded.span
+        position = .region(padded)
     }
 }

@@ -7,7 +7,6 @@ struct ContentView: View {
 
     @State private var selectedDestination: Destination?
     @State private var showSearch = false
-    @State private var showSettings = false
     @State private var alertDistance: Double = 800
 
     var body: some View {
@@ -45,21 +44,14 @@ struct ContentView: View {
                         selectedDestination = dest
                     }
                 }
-                .sheet(isPresented: $showSettings) {
-                    if let dest = selectedDestination {
-                        AlertSettingsView(destination: dest, alertDistance: $alertDistance) { session in
-                            sessionManager.startSession(session)
-                            destinationStore.recordUse(dest)
-                            locationManager.startTracking(destination: dest, alertDistance: alertDistance)
-                            showSettings = false
-                            selectedDestination = nil
-                        }
+                .sheet(item: $selectedDestination) { dest in
+                    AlertSettingsView(destination: dest, alertDistance: $alertDistance) { session in
+                        beginSession(session, destination: dest)
                     }
                 }
                 .onChange(of: selectedDestination) { _, newValue in
                     if newValue != nil {
                         showSearch = false
-                        showSettings = true
                     }
                 }
             }
@@ -68,6 +60,16 @@ struct ContentView: View {
             locationManager.requestAuthorization()
             sessionManager.requestNotificationAuthorization()
         }
+    }
+
+    private func beginSession(_ session: NapSession, destination: Destination) {
+        locationManager.onProximityReached = { [weak sessionManager] in
+            sessionManager?.triggerAlert()
+        }
+        sessionManager.startSession(session)
+        destinationStore.recordUse(destination)
+        locationManager.startTracking(destination: destination, alertDistance: session.alertDistance)
+        selectedDestination = nil
     }
 
     private var header: some View {
@@ -117,7 +119,6 @@ struct ContentView: View {
                     ForEach(destinations) { dest in
                         DestinationRow(destination: dest) {
                             selectedDestination = dest
-                            showSettings = true
                         }
                     }
                 }

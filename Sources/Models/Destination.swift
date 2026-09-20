@@ -9,13 +9,25 @@ struct Destination: Identifiable, Codable, Equatable, Hashable {
     var lastUsed: Date
     var useCount: Int
 
-    init(id: UUID = UUID(), name: String, coordinate: CLLocationCoordinate2D, address: String? = nil, lastUsed: Date = Date(), useCount: Int = 0) {
+    init(
+        id: UUID = UUID(),
+        name: String,
+        coordinate: CLLocationCoordinate2D,
+        address: String? = nil,
+        lastUsed: Date = Date(),
+        useCount: Int = 0
+    ) {
         self.id = id
         self.name = name
         self.coordinate = coordinate
         self.address = address
         self.lastUsed = lastUsed
         self.useCount = useCount
+    }
+
+    /// Convenience for CoreLocation distance calculations.
+    var location: CLLocation {
+        CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
     }
 
     static func == (lhs: Destination, rhs: Destination) -> Bool {

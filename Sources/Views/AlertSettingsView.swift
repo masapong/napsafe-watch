@@ -22,7 +22,7 @@ struct AlertSettingsView: View {
                             .font(.headline)
                         Picker("", selection: $alertDistance) {
                             ForEach(distances, id: \.self) { d in
-                                Text(formatDistance(d)).tag(d)
+                                Text(DistanceFormat.label(meters: d)).tag(d)
                             }
                         }
                         .pickerStyle(.wheel)
@@ -101,15 +101,5 @@ struct AlertSettingsView: View {
         .padding()
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func formatDistance(_ meters: Double) -> String {
-        if meters >= 1000 {
-            let km = meters / 1000
-            return km.truncatingRemainder(dividingBy: 1) == 0
-                ? "\(Int(km)) km"
-                : "\(km) km"
-        }
-        return "\(Int(meters)) m"
     }
 }
