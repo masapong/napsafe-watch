@@ -17,6 +17,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     var onProximityReached: (() -> Void)?
 
+    private var hasFiredProximity = false
+
     override init() {
         super.init()
         authorizationStatus = manager.authorizationStatus
@@ -24,6 +26,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.distanceFilter = 10
         manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
+        manager.activityType = .otherNavigation
     }
 
     func requestAuthorization() {
@@ -54,6 +58,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         targetDestination = nil
         alertDistance = nil
         distanceToDestination = nil
+        hasFiredProximity = false
     }
 
     // MARK: - CLLocationManagerDelegate
@@ -86,7 +91,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         let dist = location.distance(from: destLoc)
         distanceToDestination = dist
 
-        if let threshold = alertDistance, dist <= threshold {
+        if let threshold = alertDistance, dist <= threshold, !hasFiredProximity {
+            hasFiredProximity = true
             onProximityReached?()
         }
     }

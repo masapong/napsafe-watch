@@ -89,11 +89,13 @@ class SessionManager: NSObject, ObservableObject, UNUserNotificationCenterDelega
         schedulePersistentNotifications()
 
         alarmTimer?.invalidate()
-        alarmTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.fireHapticPattern()
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        alarmTimer = timer
     }
 
     private func fireHapticPattern() {
@@ -169,11 +171,11 @@ class SessionManager: NSObject, ObservableObject, UNUserNotificationCenterDelega
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
+        completionHandler()
         Task { @MainActor in
             if response.actionIdentifier == Self.stopAlarmActionIdentifier {
                 self.endSession()
             }
-            completionHandler()
         }
     }
 }

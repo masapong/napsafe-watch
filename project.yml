@@ -21,8 +21,9 @@ targets:
       SUPPORTED_PLATFORMS: "watchos watchsimulator"
       TARGETED_DEVICE_FAMILY: 4
       SKIP_INSTALL: NO
-      CODE_SIGN_IDENTITY: ""
+      CODE_SIGN_IDENTITY: "Apple Development"
       CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: 97R97H732K
       PROVISIONING_PROFILE_SPECIFIER: ""
     info:
       path: Resources/Info.plist

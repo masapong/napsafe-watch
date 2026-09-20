@@ -133,12 +133,14 @@ struct ActiveSessionView: View {
 
     private func startNapTimer() {
         napMinutes = Int(Date().timeIntervalSince(session.startTime) / 60)
-        napTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+        let timer = Timer(timeInterval: 10, repeats: true) { _ in
             let elapsedMin = Int(Date().timeIntervalSince(session.startTime) / 60)
             if elapsedMin != napMinutes {
                 napMinutes = elapsedMin
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        napTimer = timer
     }
 
     private func stopSession() {
@@ -150,9 +152,11 @@ struct ActiveSessionView: View {
 
     private func startMapUpdates() {
         updateMapImage()
-        mapUpdateTimer = Timer.scheduledTimer(withTimeInterval: 120, repeats: true) { _ in
+        let timer = Timer(timeInterval: 120, repeats: true) { _ in
             updateMapImage()
         }
+        RunLoop.main.add(timer, forMode: .common)
+        mapUpdateTimer = timer
     }
 
     private func updateMapImage() {
@@ -180,10 +184,10 @@ struct ActiveSessionView: View {
         options.scale = 2.0
 
         let snapshotter = MKMapSnapshotter(options: options)
-        snapshotter.start { [weak self] snapshot, error in
+        snapshotter.start { snapshot, error in
             guard let snapshot = snapshot, error == nil else { return }
-            DispatchQueue.main.async {
-                self?.mapImage = snapshot.image
+            Task { @MainActor in
+                mapImage = snapshot.image
             }
         }
     }
