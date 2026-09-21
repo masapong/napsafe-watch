@@ -3,7 +3,7 @@ import CoreLocation
 import Combine
 
 @MainActor
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocationManagerDelegate {
     private let manager = CLLocationManager()
 
     @Published var currentLocation: CLLocation?
@@ -26,7 +26,9 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.distanceFilter = 10
         manager.allowsBackgroundLocationUpdates = true
+        #if !os(watchOS)
         manager.pausesLocationUpdatesAutomatically = false
+        #endif
         manager.activityType = .otherNavigation
     }
 
