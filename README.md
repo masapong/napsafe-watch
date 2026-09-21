@@ -60,13 +60,13 @@ The project is written in modern **SwiftUI** and conforms to Apple's latest watc
 ```
 napsafe-watch/
 ├── project.yml                     # XcodeGen project specification
-├── NapsafeWatch.xcodeproj          # Generated Xcode project
+├── Orio.xcodeproj                  # Generated Xcode project
 ├── Resources/
 │   ├── Info.plist                  # Background location modes & descriptions
-│   ├── NapsafeWatch.entitlements   # Location push & Map entitlements
+│   ├── Orio.entitlements           # Location push & Map entitlements
 │   └── Assets.xcassets             # App icons & color assets
 └── Sources/
-    ├── NapsafeWatchApp.swift       # App entry point & service coordination
+    ├── OrioApp.swift               # App entry point & service coordination
     ├── Models/
     │   ├── Destination.swift       # Destination entity & coordinate Codable support
     │   └── Session.swift           # NapSession model & TransportMode enum
@@ -166,11 +166,11 @@ flowchart TD
    git clone https://github.com/masapong/napsafe-watch.git
    cd napsafe-watch
    ```
-2. Open `NapsafeWatch.xcodeproj` in Xcode:
+2. Open `Orio.xcodeproj` in Xcode:
    ```bash
-   open NapsafeWatch.xcodeproj
+   open Orio.xcodeproj
    ```
-3. Select the `NapsafeWatch` scheme and an **Apple Watch Series 9 / Ultra 2 Simulator** (or physical Apple Watch).
+3. Select the `Orio` scheme and an **Apple Watch Series 9 / Ultra 2 Simulator** (or physical Apple Watch).
 4. Press `Cmd + R` to build and run.
 
 #### Option B: Regenerate with XcodeGen
@@ -185,7 +185,7 @@ brew install xcodegen
 xcodegen generate
 
 # Open generated project
-open NapsafeWatch.xcodeproj
+open Orio.xcodeproj
 ```
 
 ---
@@ -208,7 +208,7 @@ To test the automatic geofence trigger:
 
 ## 🔒 Permissions & Entitlements
 
-Orio requires the following permissions and capabilities configured in `Resources/Info.plist` and `Resources/NapsafeWatch.entitlements`:
+Orio requires the following permissions and capabilities configured in `Resources/Info.plist` and `Resources/Orio.entitlements`:
 
 - **Location When In Use & Always** (`NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`):
   Allows background location updates while the watch display is dimmed or asleep during your commute.
