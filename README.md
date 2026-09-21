@@ -14,7 +14,7 @@
 
 **Orio** is a standalone watchOS application designed for commuters who want to rest or nap peacefully on trains, subways, and buses without the fear of oversleeping and missing their station.
 
-Traditional time-based alarms fall short on public transit because of unpredictable delays, signal stops, and timetable changes. Orio uses **real-time GPS geofencing and proximity tracking directly on your Apple Watch**, triggering escalating haptic patterns and persistent time-sensitive alerts the moment you approach your destination.
+Traditional time-based alarms fall short on public transit because of unpredictable delays, signal stops, and timetable changes. Orio uses **real-time GPS geofencing and proximity tracking directly from the watch** to monitor your distance to the destination and wake you just before you arrive.
 
 ---
 
@@ -58,12 +58,12 @@ Traditional time-based alarms fall short on public transit because of unpredicta
 The project is written in modern **SwiftUI** and conforms to Apple's latest watchOS conventions:
 
 ```
-napsafe-watch/
+orio/
 ├── project.yml                     # XcodeGen project specification
-├── NapsafeWatch.xcodeproj          # Generated Xcode project
+├── Orio.xcodeproj                 # Generated Xcode project
 ├── Resources/
 │   ├── Info.plist                  # Background location modes & descriptions
-│   ├── NapsafeWatch.entitlements   # Location push & Map entitlements
+│   ├── Orio.entitlements           # Location push & Map entitlements
 │   └── Assets.xcassets             # App icons & color assets
 └── Sources/
     ├── NapsafeWatchApp.swift       # App entry point & service coordination
@@ -88,11 +88,11 @@ napsafe-watch/
 
 | Component | Responsibility |
 |---|---|
-| [`LocationManager`](Sources/Services/LocationManager.swift) | Configures `CLLocationManager` with `allowsBackgroundLocationUpdates = true` and `kCLLocationAccuracyBest`. Calculates real-time distance and fires proximity alerts even while the watch screen is asleep. |
-| [`SessionManager`](Sources/Services/SessionManager.swift) | Orchestrates the alarm sequence, manages repeating `WKInterfaceDevice` haptics, handles interactive `UNNotificationCategory` responses, and tallies cumulative nap minutes. |
-| [`DestinationStore`](Sources/Services/DestinationStore.swift) | Persists user destinations in `UserDefaults`, manages favorites and recents, and calculates nearby presets from static pre-configured transit coordinates. |
+| [`LocationManager`](Sources/Services/LocationManager.swift) | Configures `CLLocationManager` with `allowsBackgroundLocationUpdates = true` and `kCLLocationAccuracyBest`. Calculates real-time distance to the active destination and triggers the proximity callback when the threshold is reached. |
+| [`SessionManager`](Sources/Services/SessionManager.swift) | Orchestrates the alarm sequence, manages repeating `WKInterfaceDevice` haptics, handles interactive `UNNotificationCategory` responses, and tracks cumulative nap time. |
+| [`DestinationStore`](Sources/Services/DestinationStore.swift) | Persists user destinations in `UserDefaults`, manages favorites and recents, and calculates nearby presets from static pre-configured station data. |
 | [`DistanceFormatter`](Sources/Utilities/DistanceFormatter.swift) | Single source of truth for formatting distance measurements (`m` and `km`) across the application. |
-| [`ActiveSessionView`](Sources/Views/ActiveSessionView.swift) | Renders the primary tracking screen, binds directly to `locationManager.distanceToDestination`, and displays ambient map snapshots via `MKMapSnapshotter`. |
+| [`ActiveSessionView`](Sources/Views/ActiveSessionView.swift) | Renders the primary tracking screen, binds directly to `locationManager.distanceToDestination`, and displays ambient map snapshots while the alarm is active. |
 
 ---
 
@@ -122,29 +122,29 @@ flowchart TD
 ## 📱 User Flow & Screens
 
 1. **Dashboard (`ContentView`)**:
-   - Total recorded nap time header.
-   - Quick-select list of nearby stations based on your current location.
-   - Pinned favorites, most-used stops, and recent history.
-   - Quick search button for any transit stop or address.
+    - Total recorded nap time header.
+    - Quick-select list of nearby stations based on your current location.
+    - Pinned favorites, most-used stops, and recent history.
+    - Quick search button for any transit stop or address.
 2. **Search (`LocationSearchView`)**:
-   - Real-time search powered by Apple's `MKLocalSearch`.
-   - Displays station/place name with formatted district/locality subtitles.
+    - Real-time search powered by Apple's `MKLocalSearch`.
+    - Displays station/place name with formatted district/locality subtitles.
 3. **Trip Setup (`AlertSettingsView`)**:
-   - Select wakeup distance: `800m`, `1 km`, or `1.5 km`.
-   - Choose transport type: Train, Subway, or Bus.
-   - Preview stop on interactive map before starting.
+    - Select wakeup distance: `800m`, `1 km`, or `1.5 km`.
+    - Choose transport type: Train, Subway, or Bus.
+    - Preview stop on interactive map before starting.
 4. **Map Preview (`MapPreviewView`)**:
-   - Shows user location and target destination marker.
-   - Includes custom circular zoom in (`+`) and zoom out (`-`) touch controls.
+    - Shows user location and target destination marker.
+    - Includes custom circular zoom in (`+`) and zoom out (`-`) touch controls.
 5. **Active Nap HUD (`ActiveSessionView`)**:
-   - Shows remaining distance in large, bold numbers.
-   - Displays live nap duration ("Napping for X min").
-   - Darkened ambient route map snapshot in the background.
-   - Single-tap cancel button.
+    - Shows remaining distance in large, bold numbers.
+    - Displays live nap duration ("Napping for X min").
+    - Darkened ambient route map snapshot in the background.
+    - Single-tap cancel button.
 6. **Alarm Screen**:
-   - Screen flashes bright red with a high-contrast "WAKE UP" title.
-   - Repeating haptic vibration on wrist.
-   - Large "Stop Alarm" button to dismiss.
+    - Screen flashes bright red with a high-contrast "WAKE UP" title.
+    - Repeating haptic vibration on wrist.
+    - Large "Stop Alarm" button to dismiss.
 
 ---
 
@@ -162,15 +162,15 @@ flowchart TD
 #### Option A: Open the Xcode Project directly
 
 1. Clone this repository:
-   ```bash
-   git clone https://github.com/masapong/napsafe-watch.git
-   cd napsafe-watch
-   ```
-2. Open `NapsafeWatch.xcodeproj` in Xcode:
-   ```bash
-   open NapsafeWatch.xcodeproj
-   ```
-3. Select the `NapsafeWatch` scheme and an **Apple Watch Series 9 / Ultra 2 Simulator** (or physical Apple Watch).
+    ```bash
+    git clone https://github.com/masapong/orio.git
+    cd orio
+    ```
+2. Open `Orio.xcodeproj` in Xcode:
+    ```bash
+    open Orio.xcodeproj
+    ```
+3. Select the `Orio` scheme and an **Apple Watch Series 9 / Ultra 2 Simulator** (or physical Apple Watch).
 4. Press `Cmd + R` to build and run.
 
 #### Option B: Regenerate with XcodeGen
@@ -185,7 +185,7 @@ brew install xcodegen
 xcodegen generate
 
 # Open generated project
-open NapsafeWatch.xcodeproj
+open Orio.xcodeproj
 ```
 
 ---
@@ -195,7 +195,7 @@ open NapsafeWatch.xcodeproj
 Because Orio relies on GPS motion, you can test it on the simulator or at your desk:
 
 ### 1. Built-in Demo Alert (Debug Mode)
-When running a `DEBUG` build, starting any nap session reveals an orange **Demo Alert** button. Tapping it immediately fires the full wake-up sequence (haptic vibrations, notifications, and alert screen).
+When running a `DEBUG` build, starting any nap session reveals an orange **Demo Alert** button. Tapping it immediately fires the full wake-up sequence (haptic vibrations, notifications, and alert escalation).
 
 ### 2. Xcode Location Simulation
 To test the automatic geofence trigger:
@@ -208,7 +208,7 @@ To test the automatic geofence trigger:
 
 ## 🔒 Permissions & Entitlements
 
-Orio requires the following permissions and capabilities configured in `Resources/Info.plist` and `Resources/NapsafeWatch.entitlements`:
+Orio requires the following permissions and capabilities configured in `Resources/Info.plist` and `Resources/Orio.entitlements`:
 
 - **Location When In Use & Always** (`NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`):
   Allows background location updates while the watch display is dimmed or asleep during your commute.

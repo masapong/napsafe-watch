@@ -23,10 +23,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		02CA8632189CF693A3449185 /* NapsafeWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NapsafeWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		02CA8632189CF693A3449185 /* Orio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Orio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1536595B04319CE3CF98A877 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		46D9F1D817C2C40F8B156DFA /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		47223F8FF4E0330995BDC0C7 /* NapsafeWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NapsafeWatch.entitlements; sourceTree = "<group>"; };
+		47223F8FF4E0330995BDC0C7 /* Orio.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Orio.entitlements; sourceTree = "<group>"; };
 		5CC94402F183B5AED8E978A0 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		5D2A6A81FFE0601E3C4F4087 /* LocationSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSearchView.swift; sourceTree = "<group>"; };
 		86381F7F52945E6BA3C7D85A /* AlertSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertSettingsView.swift; sourceTree = "<group>"; };
@@ -71,7 +71,7 @@
 			children = (
 				1536595B04319CE3CF98A877 /* Assets.xcassets */,
 				BA55A98B3903C7F978428790 /* Info.plist */,
-				47223F8FF4E0330995BDC0C7 /* NapsafeWatch.entitlements */,
+				47223F8FF4E0330995BDC0C7 /* Orio.entitlements */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -106,7 +106,7 @@
 		D3A7D7C41C0C4946ED4AA65A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				02CA8632189CF693A3449185 /* NapsafeWatch.app */,
+				02CA8632189CF693A3449185 /* Orio.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -123,9 +123,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		717299497E4497D72AC0732B /* NapsafeWatch */ = {
+		717299497E4497D72AC0732B /* Orio */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4E575DAE1DB493FADFB44D4C /* Build configuration list for PBXNativeTarget "NapsafeWatch" */;
+			buildConfigurationList = 4E575DAE1DB493FADFB44D4C /* Build configuration list for PBXNativeTarget "Orio" */;
 			buildPhases = (
 				4BF0738E58189C25F1183945 /* Sources */,
 				E1F98C0F864287F07CB2BA3E /* Resources */,
@@ -134,11 +134,11 @@
 			);
 			dependencies = (
 			);
-			name = NapsafeWatch;
+			name = Orio;
 			packageProductDependencies = (
 			);
-			productName = NapsafeWatch;
-			productReference = 02CA8632189CF693A3449185 /* NapsafeWatch.app */;
+			productName = Orio;
+			productReference = 02CA8632189CF693A3449185 /* Orio.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -155,7 +155,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 6FD01FDA8BE64C4FD5C836E3 /* Build configuration list for PBXProject "NapsafeWatch" */;
+			buildConfigurationList = 6FD01FDA8BE64C4FD5C836E3 /* Build configuration list for PBXProject "Orio" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -169,7 +169,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				717299497E4497D72AC0732B /* NapsafeWatch */,
+				717299497E4497D72AC0732B /* Orio */,
 			);
 		};
 /* End PBXProject section */
@@ -333,11 +333,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Resources/NapsafeWatch.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Resources/Orio.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = Resources/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = com.napsafe.NapsafeWatch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orio.Orio;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;
 				SKIP_INSTALL = NO;
@@ -350,11 +350,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Resources/NapsafeWatch.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Resources/Orio.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = Resources/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = com.napsafe.NapsafeWatch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orio.Orio;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = watchos;
 				SKIP_INSTALL = NO;
@@ -366,7 +366,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4E575DAE1DB493FADFB44D4C /* Build configuration list for PBXNativeTarget "NapsafeWatch" */ = {
+		4E575DAE1DB493FADFB44D4C /* Build configuration list for PBXNativeTarget "Orio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D8C78EC849F1F621ECB8D259 /* Debug */,
@@ -375,7 +375,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		6FD01FDA8BE64C4FD5C836E3 /* Build configuration list for PBXProject "NapsafeWatch" */ = {
+		6FD01FDA8BE64C4FD5C836E3 /* Build configuration list for PBXProject "Orio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				91CF78A8935CEAD6652E8934 /* Debug */,

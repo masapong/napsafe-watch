@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct NapsafeWatchApp: App {
+struct OrioApp: App {
     @StateObject private var destinationStore = DestinationStore()
     @StateObject private var locationManager = LocationManager()
     @StateObject private var sessionManager = SessionManager()
