@@ -114,7 +114,7 @@ class SessionManager: NSObject, ObservableObject, UNUserNotificationCenterDelega
         content.categoryIdentifier = Self.alertCategoryIdentifier
         content.interruptionLevel = .timeSensitive
 
-        let request = UNNotificationRequest(identifier: "napsafe.alarm.immediate", content: content, trigger: nil)
+        let request = UNNotificationRequest(identifier: "orio.alarm.immediate", content: content, trigger: nil)
         addNotificationRequest(request, description: "immediate alarm")
     }
 
@@ -122,7 +122,7 @@ class SessionManager: NSObject, ObservableObject, UNUserNotificationCenterDelega
         let destinationName = activeSession?.destination.name ?? "your destination"
 
         for index in 1...20 {
-            let id = "napsafe.alarm.\(index)"
+            let id = "orio.alarm.\(index)"
             alarmNotificationIDs.append(id)
 
             let content = UNMutableNotificationContent()
@@ -148,8 +148,8 @@ class SessionManager: NSObject, ObservableObject, UNUserNotificationCenterDelega
 
     private func removeAlarmNotifications() {
         var idsToRemove = alarmNotificationIDs
-        idsToRemove.append("napsafe.alarm.immediate")
-        idsToRemove.append("napsafe.arrival")
+        idsToRemove.append("orio.alarm.immediate")
+        idsToRemove.append("orio.arrival")
 
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: idsToRemove)
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: idsToRemove)
