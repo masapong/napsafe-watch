@@ -1,4 +1,4 @@
-# Napsafe (watchOS) 🚊😴
+# Orio (watchOS) 🚊😴
 
 > **Smart, location-aware transit nap alarm for Apple Watch.** Never miss your stop again.
 
@@ -12,9 +12,9 @@
 
 ## 📖 Overview
 
-**Napsafe** is a standalone watchOS application designed for commuters who want to rest or nap peacefully on trains, subways, and buses without the fear of oversleeping and missing their station.
+**Orio** is a standalone watchOS application designed for commuters who want to rest or nap peacefully on trains, subways, and buses without the fear of oversleeping and missing their station.
 
-Traditional time-based alarms fall short on public transit because of unpredictable delays, signal stops, and timetable changes. Napsafe uses **real-time GPS geofencing and proximity tracking directly on your Apple Watch**, triggering escalating haptic patterns and persistent time-sensitive alerts the moment you approach your destination.
+Traditional time-based alarms fall short on public transit because of unpredictable delays, signal stops, and timetable changes. Orio uses **real-time GPS geofencing and proximity tracking directly on your Apple Watch**, triggering escalating haptic patterns and persistent time-sensitive alerts the moment you approach your destination.
 
 ---
 
@@ -192,7 +192,7 @@ open NapsafeWatch.xcodeproj
 
 ## 🧪 Testing & Simulation
 
-Because Napsafe relies on GPS motion, you can test it on the simulator or at your desk:
+Because Orio relies on GPS motion, you can test it on the simulator or at your desk:
 
 ### 1. Built-in Demo Alert (Debug Mode)
 When running a `DEBUG` build, starting any nap session reveals an orange **Demo Alert** button. Tapping it immediately fires the full wake-up sequence (haptic vibrations, notifications, and alert screen).
@@ -202,13 +202,13 @@ To test the automatic geofence trigger:
 1. Start a nap session targeting **Tokyo Station** with an **800 m** alert radius.
 2. In Xcode's debug bar, click the **Simulate Location** button (location arrow icon).
 3. Select a custom GPX file or simulate movement towards the destination.
-4. When the simulated distance drops below 800 meters, Napsafe will trigger the alarm automatically.
+4. When the simulated distance drops below 800 meters, Orio will trigger the alarm automatically.
 
 ---
 
 ## 🔒 Permissions & Entitlements
 
-Napsafe requires the following permissions and capabilities configured in `Resources/Info.plist` and `Resources/NapsafeWatch.entitlements`:
+Orio requires the following permissions and capabilities configured in `Resources/Info.plist` and `Resources/NapsafeWatch.entitlements`:
 
 - **Location When In Use & Always** (`NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`):
   Allows background location updates while the watch display is dimmed or asleep during your commute.

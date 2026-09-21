@@ -28,11 +28,11 @@ targets:
     info:
       path: Resources/Info.plist
       properties:
-        CFBundleDisplayName: Napsafe
+        CFBundleDisplayName: Orio
         WKApplication: true
         WKWatchOnly: true
-        NSLocationWhenInUseUsageDescription: "Napsafe needs your location to alert you before reaching your destination."
-        NSLocationAlwaysAndWhenInUseUsageDescription: "Napsafe tracks your position during naps to notify you near your stop."
+        NSLocationWhenInUseUsageDescription: "Orio needs your location to alert you before reaching your destination."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Orio tracks your position during naps to notify you near your stop."
         UIBackgroundModes:
           - location
     entitlements:

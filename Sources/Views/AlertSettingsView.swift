@@ -65,7 +65,7 @@ struct AlertSettingsView: View {
                         onStart(session)
                         dismiss()
                     } label: {
-                        Label("Start Napsafe", systemImage: "play.fill")
+                        Label("Start Orio", systemImage: "play.fill")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)

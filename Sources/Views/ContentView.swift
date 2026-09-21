@@ -37,7 +37,7 @@ struct ContentView: View {
                     }
                     .padding()
                 }
-                .navigationTitle("Napsafe")
+                .navigationTitle("Orio")
                 .navigationBarTitleDisplayMode(.inline)
                 .sheet(isPresented: $showSearch) {
                     LocationSearchView { dest in

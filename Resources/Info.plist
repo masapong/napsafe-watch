@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Napsafe</string>
+	<string>Orio</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -21,9 +21,9 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Napsafe tracks your position during naps to notify you near your stop.</string>
+	<string>Orio tracks your position during naps to notify you near your stop.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Napsafe needs your location to alert you before reaching your destination.</string>
+	<string>Orio needs your location to alert you before reaching your destination.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
